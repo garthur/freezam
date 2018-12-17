@@ -7,8 +7,8 @@ import json
 import argparse
 import logging
 
-from freezam import fzsong
-from freezam import fzdb
+import fzsong
+import fzdb
 
 class Freezam(object):
 
