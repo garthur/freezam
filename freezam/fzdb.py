@@ -10,7 +10,7 @@ import tabulate
 import psycopg2
 import numpy as np
 
-import fzcomp
+import freezam.fzcomp as fzcomp
 
 logger = logging.getLogger('fz.db')
 

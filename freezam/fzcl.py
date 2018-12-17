@@ -8,8 +8,8 @@ import argparse
 import logging
 import tabulate
 
-import fzsong
-import fzdb
+import freezam.fzsong as fzsong
+import freezam.fzdb as fzdb
 
 class Freezam(object):
 

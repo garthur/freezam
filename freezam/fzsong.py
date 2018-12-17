@@ -4,8 +4,8 @@
 import logging
 import uuid
 
-import fzcomp
-import fzio
+import freezam.fzcomp as fzcomp
+import freezam.fzio as fzio
 
 logger = logging.getLogger("fz.song")
 
