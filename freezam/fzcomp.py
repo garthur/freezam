@@ -60,14 +60,23 @@ def plot_periodogram(freq, pdgram):
     plt.ylabel('PSD [V**2/Hz]')
     plt.show()
 
-def plot_spectrogram(l_pdgrams):
-    # TODO: implement this in a memory-efficient way
+def plot_spectrogram(l_pdgrams, save_location=None):
+    # TODO: TEST this from an entry_point
     """
     takes a set of local periodograms (l_pdgrams), constructs 
     a spectrogram, and then plots it
     """
-    plt.imshow(l_pdgrams.T)
-    plt.show()
+    plt.figure()
+    plt.pcolormesh(l_pdgrams.T)
+    plt.xlabel("Window Center")
+    plt.ylabel("Frequency [Hz]")
+    cbar = plt.colorbar()
+    cbar.ax.set_ylabel("PSD [V**2/Hz]", rotation=270)
+    if save_location is None:
+        plt.show()
+    else:
+        plt.savefig(save_location)
+        
 
 # SIGNATURES
 def compute_sig_posfreq(l_pdgrams, samp_rate):
