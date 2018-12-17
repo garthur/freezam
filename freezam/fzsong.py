@@ -25,9 +25,9 @@ class SongEntry(object):
         # required argument
         self.address = address
         # optional arguments to init
-        self.title = title
-        self.artist = artist
-        self.album = album
+        self.title = title.lower()
+        self.artist = artist.lower()
+        self.album = album.lower()
         self.date = date
         
         # computed on initialization
