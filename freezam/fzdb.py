@@ -156,7 +156,8 @@ class FileSystemDB(object):
             # get the appropriate signature from the file
             sig_full = pickle.load(os.path.join(self.fz_song_sigs, song + ".pkl"))[self.params["search"]["sig_type"]]
             # if a song matches, then add it's info to our list of matches
-            if (fzcomp.match_signature(sig_snippet, sig_full)):
+            if (fzcomp.match_signature(sig_snippet, sig_full,
+                                       epsilon=self.params["search"]["threshold_epsilon"])):
                 matches.append(self.get_info(song))
                 logger.info("result " + str(len(matches)) + " found!")
             # if we have enough matches, stop looking
@@ -368,7 +369,6 @@ class PostgreSQLDB:
             song = cur.fetchone()
 
             while song is not None:
-                # do the actual comparison
                 # pull the signature from the song
                 sig_full = np.array(song[1])
                 # and match it
