@@ -5,6 +5,7 @@ import logging
 import uuid
 
 import fzcomp
+import fzio
 
 logger = logging.getLogger("fz.song")
 

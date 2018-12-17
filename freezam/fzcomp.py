@@ -71,7 +71,6 @@ def plot_spectrogram(l_pdgrams):
 
 # SIGNATURES
 def compute_sig_posfreq(l_pdgrams, samp_rate):
-    # TODO: test this
     """
     computes a signature from local periodograms (l_pdgram) using
     the peak positive frequency method
@@ -85,7 +84,7 @@ def compute_sig_posfreq(l_pdgrams, samp_rate):
         # record that frequency normalized to [0, 1]
         signatures.append([f])
     
-    return signatures
+    return np.array(signatures)
 
 def compute_sig_maxpow(l_pdgrams, samp_rate, m=8):
     """

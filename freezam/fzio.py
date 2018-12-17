@@ -77,7 +77,7 @@ def get_ltype(location):
     takes in a location string and returns one of locationtype
     (file, url, or socket)
     """
-    # check for a file location, may be absolute or relative path
+    # check for a file location
     if (os.path.exists(os.path.abspath(location))):
         ltype = locationtype.FILE
     # check if it is a valid URL

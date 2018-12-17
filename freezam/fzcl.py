@@ -14,11 +14,11 @@ class Freezam(object):
 
     def __init__(self):
         # initial locations
-        self.root = os.path.dirname(os.path.abspath(__file__))
+        self.root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
         self.log_file = os.path.join(self.root, "temp" + os.sep + "freezam.log")
         
         # get settings
-        self.db_settings = os.path.join(self.root, "settings" + os.sep + "db.json")
+        self.db_settings = os.path.join(self.root,"settings" + os.sep + "db.json")
         with open(self.db_settings) as d:
             self.db_settings = json.load(d)
         self.parameters = os.path.join(self.root, "settings" + os.sep + "param.json")
