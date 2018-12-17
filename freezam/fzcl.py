@@ -6,6 +6,7 @@ import sys
 import json
 import argparse
 import logging
+import tabulate
 
 import fzsong
 import fzdb
@@ -162,17 +163,29 @@ class Freezam(object):
         top-level handler for identifying a song from an existing song library
         """
         self.logger.info("identifying the provided snippet...")
+        
+        header = ["id", "title", "artist", "album", "date"]
+        
         snippet = fzsong.SongEntry(args.snippet)
         result = self.databaser.slow_search(snippet, num_matches=args.matches)
-        self.logger.info("done!")
-        print(result)
+        
+        if result is None:
+            print("No matching songs were found. :(")
+            self.logger.info("no matching songs were found :(")
+        else:
+            print(tabulate.tabulate(result, headers=header, tablefmt="orgtbl"))
 
     def lib(self, args):
         """
         top-level handler for listing songs from the current song library
         """
         self.logger.info("listing library...")
-        print(self.databaser.list_db())
+        
+        header = ["id", "title", "artist", "album", "date"]
+        
+        lib = self.databaser.list_db()
+        
+        print(tabulate.tabulate(lib, headers=header, tablefmt="orgtbl"))
 
 if __name__ == "__main__":
     Freezam()
