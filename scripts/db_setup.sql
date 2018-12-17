@@ -1,5 +1,6 @@
 DROP TABLE IF EXISTS fz_parameters;
 DROP TABLE IF EXISTS fz_song_signatures;
+DROP TABLE IF EXISTS fz_song_data;
 DROP TABLE IF EXISTS fz_song_library;
 
 CREATE TABLE fz_parameters (
@@ -28,5 +29,12 @@ CREATE TABLE fz_song_signatures (
     song_id INTEGER,
     sig_type TEXT,
     sig_ REAL[][],
+    FOREIGN KEY (song_id) REFERENCES fz_song_library (song_id) ON DELETE CASCADE
+);
+
+CREATE TABLE fz_song_data (
+    id SERIAL PRIMARY KEY,
+    song_id INTEGER,
+    data BYTEA,
     FOREIGN KEY (song_id) REFERENCES fz_song_library (song_id) ON DELETE CASCADE
 );
