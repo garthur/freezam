@@ -1,0 +1,14 @@
+{
+    "db_type" : "sql",
+
+    "sql" : {
+        "address": "XXXX",
+        "db": "XXXX",
+        "username": "XXXX",
+        "password": "XXXX"
+    },
+
+    "file" : {
+        "address": "ABSOLUTE PATH TO FILESYSTEM HERE"
+    }
+}

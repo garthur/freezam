@@ -1,0 +1,21 @@
+{
+    "periodograms": {
+        "window_fn": "hamming",
+        "window_size": 10,
+        "window_shift": 1,
+        "kernel": "None"
+    },
+
+    "maxpow" : {
+        "octaves": 8
+    },
+
+    "posfreq" : {
+
+    },
+
+    "search" : {
+        "sig_type": "maxpow",
+        "threshold_epsilon": 1000
+    }
+}
