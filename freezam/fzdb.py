@@ -14,72 +14,79 @@ import fzcomp
 
 logger = logging.getLogger('fz.db')
 
-# FIXME: this no longer works with the restructure
+# TODO: test this
 class FileSystemDB(object):
     """
     provides functions for reading and writing to a database
     represented as a file system
     """
 
-    def __init__(self, settings):
+    def __init__(self, db_settings, param_settings):
         """
         initializes a file system databaser 
         """
         logger.info("initializing file databaser...")
-        self.root = os.path.dirname(os.path.abspath(__file__))
-        self.home_dir = os.path.join(self.root, "db")
-        self.data_path = os.path.join(self.home_dir, "data")
-        self.files_path = os.path.join(self.home_dir, "files")
+        db_root = db_settings["address"]
+        self.fz_song_lib = os.path.join(db_root, "fz_song_lib")
+        self.fz_song_sigs = os.path.join(db_root, "fz_song_sigs")
+        self.fz_song_data = os.path.join(db_root, "fz_song_data")
         # if these paths don't exist, make them
         try:
-            if (not os.path.exists(self.home_dir)):
-                logger.warn(self.home_dir + " does not exist, creating...")
-                os.makedirs(self.home_dir)
+            if (not os.path.exists(self.fz_song_lib)):
+                logger.warn(self.fz_song_lib + " does not exist, creating...")
+                os.makedirs(self.fz_song_lib)
                 logger.info("home directory created")
-            if (not os.path.exists(self.data_path)):
-                logger.warn(self.data_path + " does not exist, creating...")
-                os.makedirs(self.data_path)
+            if (not os.path.exists(self.fz_song_sigs)):
+                logger.warn(self.fz_song_sigs + " does not exist, creating...")
+                os.makedirs(self.fz_song_sigs)
                 logger.info("home directory created")
-            if (not os.path.exists(self.files_path)):
-                logger.warn(self.files_path + " does not exist, creating...")
-                os.makedirs(self.files_path)
+            if (not os.path.exists(self.fz_song_data)):
+                logger.warn(self.fz_song_data + " does not exist, creating...")
+                os.makedirs(self.fz_song_data)
                 logger.info("home directory created")
+            self.params = param_settings
             logger.info("file databaser initialized!")
         except:
             logger.error("error in file database setup", exc_info=True)
+            sys.exit()
 
     def write(self, song_entry):
         """
         writes a song_entry to the database, including moving files if necessary
         """
-        data_path = os.path.join(self.data_path, song_entry.song_id + ".pkl")
-        file_path = os.path.join(self.files_path, song_entry.song_id + ".wav")
-        # use pickle to dump the song entry object into data
+        s = song_entry
+        lib_file = os.path.join(self.fz_song_lib, song_entry.song_id + ".pkl")
+        sig_file = os.path.join(self.fz_song_sigs, song_entry.song_id + ".pkl")
+        song_file = os.path.join(self.fz_song_data, song_entry.song_id + ".wav")
+        # use pickle to dump the song entry object into the various files
         try:
-            logger.info("writing " + song_entry.song_id + " to the library...")
-            with open(data_path, 'wb') as data_output:
-                pickle.dump(song_entry, data_output, pickle.HIGHEST_PROTOCOL)
-            logger.info("library writing complete!")
-            del data_output
-            # now save the 
-            logger.info("saving the songfile to the library...")
+            logger.info("writing " + s.song_id + " to the library...")
+            # write in the metadata
+            with open(lib_file, 'wb') as output:
+                lib_info = [s.song_id, s.title, s.artist, s.album, s.date]
+                pickle.dump(lib_info, output, pickle.HIGHEST_PROTOCOL)
+            # write in the signatures
+            with open(sig_file, "wb") as output:
+                sigs = {"maxpow":fzcomp.compute_sig_maxpow(s.l_pdgrams, s.samp_rate), 
+                        "posfreq":fzcomp.compute_sig_posfreq(s.l_pdgrams, s.samp_rate)}
+                pickle.dump(sigs, output, pickle.HIGHEST_PROTOCOL)
+            # write in the files
             # if the file is in temp, we move it to the db
-            if (os.path.join(self.root, "temp") in song_entry.address):
-                shutil.move(song_entry.address, file_path)
+            if ("temp" in s.address):
+                shutil.move(s.address, song_file)
             # otherwise, copy it from its initial location
             else:
-                shutil.copyfile(song_entry.address, file_path)
-            logger.info("songfile saved!")
+                shutil.copyfile(s.address, song_file)
+            logger.info("song " + s.song_id + " has been written to the database!")
         except:
-            logger.error("failed to write song " + song_entry.song_id + " to the database",
+            logger.error("failed to write song " + s.song_id + " to the database",
                          exc_info = True)
-
-        return data_path, file_path
 
     def remove(self, song_id):
         try:
-            os.remove(os.path.join(self.data_path, song_id + ".pkl"))
-            os.remove(os.path.join(self.files_path, song_id + ".wav"))
+            os.remove(os.path.join(self.fz_song_lib, song_id + ".pkl"))
+            os.remove(os.path.join(self.fz_song_sigs, song_id + ".pkl"))
+            os.remove(os.path.join(self.fz_song_data, song_id + ".wav"))
         except:
             logger.error("failed to remove song " + song_id + " from the database", 
                          exc_info = True)
@@ -95,7 +102,7 @@ class FileSystemDB(object):
         """
         load a SongEntry object into memory from its id
         """
-        data = os.path.join(self.data_path, song_id + ".pkl")
+        data = os.path.join(self.fz_song_lib, song_id + ".pkl")
         try:
             with open(data, "rb") as song_file:
                 song = pickle.load(song_file)
@@ -114,7 +121,7 @@ class FileSystemDB(object):
         """
         creates a generator for the database that can be iterated through
         """
-        for song in os.listdir(self.data_path):
+        for song in os.listdir(self.fz_song_lib):
             song_id = song.rsplit(".", 1)[0]
             yield self.get_info(song_id)
         
@@ -124,11 +131,9 @@ class FileSystemDB(object):
         """
         headers = ["id", "title", "artist", "album", "date"]
         rows = []
-        for song_entry in self.iterate():
-            row = [song_entry.song_id, song_entry.title, song_entry.artist,
-                song_entry.album, song_entry.date]
-            rows.append(row)
-        return tabulate.tabulate(rows, headers=headers, tablefmt='orgtbl')
+        for song in self.iterate():
+            rows.append(song)
+        return rows
 
     def update_db(self, new_func):
         """
@@ -142,24 +147,22 @@ class FileSystemDB(object):
         linearly searches the database for a snippet of the data 
         """
         matches = []
+        
+        sig_snippet = fzcomp.compute_sig(snippet.l_pdgrams, snippet.samp_rate,
+                                         self.params["search"]["sig_type"])
+
         logger.info("slow searching through the database...")
-        for song_entry in self.iterate():
+        for song in os.listdir(self.fz_song_sigs):
+            # get the appropriate signature from the file
+            sig_full = pickle.load(os.path.join(self.fz_song_sigs, song + ".pkl"))[self.params["search"]["sig_type"]]
             # if a song matches, then add it's info to our list of matches
-            if (fzcomp.match_signature(snippet.l_pdgrams, song_entry.l_pdgrams)):
-                matches.append([song_entry.song_id, song_entry.title, song_entry.artist,
-                                song_entry.album, song_entry.date])
+            if (fzcomp.match_signature(sig_snippet, sig_full)):
+                matches.append(self.get_info(song))
                 logger.info("result " + str(len(matches)) + " found!")
-            # if we have enough matches, return them
+            # if we have enough matches, stop looking
             if (len(matches) == num_matches):
-                return tabulate.tabulate(matches, headers=["id", "title", "artist", "album", "date"],
-                                         tablefmt="orgtbl") 
+                break
         return None if len(matches) == 0 else matches
-    
-    def search(self, snippet, num_matches=1):
-        """
-        searches the database using locality sensitive hashing
-        """
-        pass
 
     def clear(self):
         """
@@ -167,7 +170,7 @@ class FileSystemDB(object):
         """
         logger.info("clearing library...")
         try:
-            for data in os.listdir(self.data_path):
+            for data in os.listdir(self.fz_song_lib):
                 song_id = data.rsplit(".", 1)[0]
                 self.remove(song_id)
         except:
@@ -336,8 +339,8 @@ class PostgreSQLDB:
         finally:
             if conn is not None:
                 conn.close()
-        # TODO: maybe move this elsewhere?
-        return tabulate.tabulate(rows, headers=headers, tablefmt='orgtbl')
+
+        return rows
 
     def slow_search(self, snippet, num_matches=1):
         """
@@ -386,9 +389,7 @@ class PostgreSQLDB:
             for match in matches:
                 cur.execute(inf_sql, (match,))
                 results.append(cur.fetchall()[0])
-            # TODO: maybe move this elsewhere?
-            return tabulate.tabulate(results, headers=["id", "title", "artist", "album", "date", "length"], 
-                                     tablefmt='orgtbl')
+            return results
         except:
             logger.error("could not search for the provided snippet", exc_info = True)
         finally:
