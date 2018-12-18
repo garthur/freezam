@@ -4,8 +4,8 @@
 import logging
 import uuid
 
-import freezam.fzcomp as fzcomp
-import freezam.fzio as fzio
+import fzcomp
+import fzio
 
 logger = logging.getLogger("fz.song")
 
@@ -35,12 +35,12 @@ class SongEntry(object):
         logger.info("all metadata added for song " + self.song_id)
         # read data
         logger.info("creating SongEntry from address at " + address)
-        self.samp_rate, data = fzio.read_song(address)
-        self.length = round(len(data) / self.samp_rate, 2)
+        self.samp_rate, self.data = fzio.read_song(address)
+        self.length = round(len(self.data) / self.samp_rate, 2)
         
         # perform spectral analysis
         self.l_pdgrams = fzcomp.compute_periodogram(
-            data,
+            self.data,
             self.samp_rate,
             window_fn = window_fn
         )
