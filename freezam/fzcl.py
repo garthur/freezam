@@ -109,7 +109,7 @@ class Freezam(object):
         if (self.db_settings["db_type"] == "sql"):
             self.databaser = fzdb.PostgreSQLDB(self.db_settings["sql"], self.parameters)
         elif (self.db_settings["db_type"] == "file"):
-            self.databaser = fzdb.FileSystemDB(self.db_settings)
+            self.databaser = fzdb.FileSystemDB(self.db_settings, self.parameters)
         else:
             self.logger.error("invalid database type specified")
             exit(1)
@@ -127,6 +127,7 @@ class Freezam(object):
         """
         top-level handler for adding a song to the persistent database
         """
+        
         # now actually add to the library
         song = fzsong.SongEntry(args.song, title=args.title, artist=args.artist,
                                 album=args.album, date=args.date)
