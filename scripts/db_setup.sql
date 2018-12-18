@@ -15,7 +15,7 @@ CREATE TABLE fz_parameters (
 );
 
 CREATE TABLE fz_song_library (
-    song_id SERIAL PRIMARY KEY,
+    song_id TEXT PRIMARY KEY,
     title TEXT,
     artist TEXT,
     album TEXT,
@@ -26,7 +26,7 @@ CREATE TABLE fz_song_library (
 
 CREATE TABLE fz_song_signatures (
     id SERIAL PRIMARY KEY,
-    song_id INTEGER,
+    song_id TEXT,
     sig_type TEXT,
     sig_ REAL[][],
     FOREIGN KEY (song_id) REFERENCES fz_song_library (song_id) ON DELETE CASCADE
@@ -34,7 +34,7 @@ CREATE TABLE fz_song_signatures (
 
 CREATE TABLE fz_song_data (
     id SERIAL PRIMARY KEY,
-    song_id INTEGER,
+    song_id TEXT,
     data BYTEA,
     FOREIGN KEY (song_id) REFERENCES fz_song_library (song_id) ON DELETE CASCADE
 );
