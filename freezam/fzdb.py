@@ -10,7 +10,7 @@ import tabulate
 import psycopg2
 import numpy as np
 
-import freezam.fzcomp as fzcomp
+import fzcomp
 
 logger = logging.getLogger('fz.db')
 
@@ -178,6 +178,10 @@ class FileSystemDB(object):
             logger.error("clearing the library failed", exc_info=True)
         logger.info("library empty!")
 
+    def plot(self, song_id, save_location=None):
+        logger.info("plotting song " + song_id)
+        song_file = os.path.join(self.fz_song_data, song_id + ".wav")
+
 class PostgreSQLDB:
     """
     provides functions for reading and writing to a database
@@ -233,42 +237,48 @@ class PostgreSQLDB:
     
         logger.info("writing song " + song_entry.song_id + " into the library")
         # sql commands
-        insert_dat = """
+        insert_lib = """
                      INSERT INTO fz_song_library (
-                        title, artist, album, release_date,
-                        samp_rate, length
-                     ) VALUES (%s, %s, %s, %s, %s, %s)
-                     RETURNING song_id;
+                        song_id, title, artist, album, 
+                        release_date, samp_rate, length
+                     ) VALUES (%s, %s, %s, %s, %s, %s, %s);
                      """
         insert_sig = """
-                     INSERT INTO fz_song_signatures(song_id, sig_type, sig_)
+                     INSERT INTO fz_song_signatures (song_id, sig_type, sig_)
                      VALUES (%s, %s, %s);
+                     """
+        insert_dat = """
+                     INSERT INTO fz_song_data (song_id, data)
+                     VALUES (%s, %s);
                      """
         try:
             # connect to db
             conn = psycopg2.connect(host=self.host, database=self.db, 
                                     user=self.user, password=self.pw)
             cur = conn.cursor()
-            # insert data
+            # insert metadata
             s = song_entry
-            logger.info("inserting song metadata")
-            cur.execute(insert_dat, (s.title, s.artist, s.album, s.date, 
-                                     s.samp_rate, s.length))
-            song_id = cur.fetchone()[0]
-            logger.info("inserting song signatures")
+            logger.info("inserting song metadata...")
+            cur.execute(insert_lib, (s.song_id, s.title, s.artist, 
+                                     s.album, s.date, s.samp_rate, s.length))
+            # insert song signature
+            logger.info("inserting song signatures...")
             # cur.execute(insert_sig, (song_id, "pdgram", PostgreSQLDB.__list_to_arr(s.l_pdgrams)))
             cur.execute(insert_sig, 
-                        (song_id, "maxpow", 
+                        (s.song_id, "maxpow", 
                          PostgreSQLDB.__list_to_arr(fzcomp.compute_sig_maxpow(s.l_pdgrams, s.samp_rate))))
             cur.execute(insert_sig,
-                        (song_id, "posfreq",
+                        (s.song_id, "posfreq",
                         PostgreSQLDB.__list_to_arr(fzcomp.compute_sig_posfreq(s.l_pdgrams, s.samp_rate))))
+            # insert song data
+            logger.info("inserting song file...")
+            cur.execute(insert_dat, (s.song_id, psycopg2.Binary(pickle.dumps(s.data))))
             # commit and clean up
             conn.commit()
             cur.close()
-            logger.info("song " + song_entry.song_id + " has been written to the library!")
+            logger.info("song " + s.song_id + " has been written to the library!")
         except:
-            logger.error("there was a problem writing " + song_entry.song_id + " to the libary", exc_info=True)
+            logger.error("there was a problem writing " + s.song_id + " to the libary", exc_info=True)
         finally:
             if conn is not None:
                 conn.close()
