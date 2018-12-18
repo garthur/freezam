@@ -8,8 +8,8 @@ import argparse
 import logging
 import tabulate
 
-import freezam.fzsong as fzsong
-import freezam.fzdb as fzdb
+import fzsong
+import fzdb
 
 class Freezam(object):
 
@@ -140,7 +140,6 @@ class Freezam(object):
         self.logger.info("ingesting...")
         for dirpath, _, filenames in os.walk(args.dir):
             for f in filenames:
-                self.logger.info(f)
                 song_path = os.path.abspath(os.path.join(dirpath, f))
                 song = fzsong.SongEntry(song_path, title=f, album=args.dir)
 
@@ -165,8 +164,7 @@ class Freezam(object):
         """
         self.logger.info("identifying the provided snippet...")
         
-        header = ["id", "title", "artist", "album", "date"]
-        
+        header = ["id", "title", "artist", "album", "date", "length"]
         snippet = fzsong.SongEntry(args.snippet)
         result = self.databaser.slow_search(snippet, num_matches=args.matches)
         
@@ -182,11 +180,17 @@ class Freezam(object):
         """
         self.logger.info("listing library...")
         
-        header = ["id", "title", "artist", "album", "date"]
-        
+        header = ["id", "title", "artist", "album", "date", "length"]
         lib = self.databaser.list_db()
         
         print(tabulate.tabulate(lib, headers=header, tablefmt="orgtbl"))
+
+    def plot(self, args):
+        """
+        top-level handler for plotting a song currently in the library
+        """
+        self.logger.info("plotting song " + args.song_id)
+        self.databaser.plot(args.song_id, args.location)
 
 if __name__ == "__main__":
     Freezam()
