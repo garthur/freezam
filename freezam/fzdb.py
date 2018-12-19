@@ -10,8 +10,6 @@ import tabulate
 import psycopg2
 import numpy as np
 
-import fzcomp
-
 logger = logging.getLogger('fz.db')
 
 # TODO: test this
@@ -241,14 +239,14 @@ class PostgreSQLDB:
                      INSERT INTO fz_song_library (
                         song_id, title, artist, album, 
                         release_date, samp_rate, length
-                     ) VALUES (%s, %s, %s, %s, %s, %s, %s);
+                     ) VALUES (%s, %s, %s, %s, %s, %s);
                      """
         insert_sig = """
                      INSERT INTO fz_song_signatures (song_id, sig_type, sig_)
                      VALUES (%s, %s, %s);
                      """
         insert_dat = """
-                     INSERT INTO fz_song_data (song_id, data)
+                     INSERT INTO fz_song_data (song_id, samp_rate, data)
                      VALUES (%s, %s);
                      """
         try:
@@ -260,7 +258,7 @@ class PostgreSQLDB:
             s = song_entry
             logger.info("inserting song metadata...")
             cur.execute(insert_lib, (s.song_id, s.title, s.artist, 
-                                     s.album, s.date, s.samp_rate, s.length))
+                                     s.album, s.date, s.length))
             # insert song signature
             logger.info("inserting song signatures...")
             # cur.execute(insert_sig, (song_id, "pdgram", PostgreSQLDB.__list_to_arr(s.l_pdgrams)))
@@ -272,7 +270,7 @@ class PostgreSQLDB:
                         PostgreSQLDB.__list_to_arr(fzcomp.compute_sig_posfreq(s.l_pdgrams, s.samp_rate))))
             # insert song data
             logger.info("inserting song file...")
-            cur.execute(insert_dat, (s.song_id, psycopg2.Binary(pickle.dumps(s.data))))
+            cur.execute(insert_dat, (s.song_id, s.samp_rate, psycopg2.Binary(pickle.dumps(s.data))))
             # commit and clean up
             conn.commit()
             cur.close()

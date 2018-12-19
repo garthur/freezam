@@ -20,7 +20,6 @@ CREATE TABLE fz_song_library (
     artist TEXT,
     album TEXT,
     release_date TEXT,
-    samp_rate INTEGER,
     length NUMERIC
 );
 
@@ -35,6 +34,7 @@ CREATE TABLE fz_song_signatures (
 CREATE TABLE fz_song_data (
     id SERIAL PRIMARY KEY,
     song_id TEXT,
+    samp_rate INTEGER,
     data BYTEA,
     FOREIGN KEY (song_id) REFERENCES fz_song_library (song_id) ON DELETE CASCADE
 );
