@@ -62,7 +62,7 @@ class Freezam(object):
         parser_identify = subparsers.add_parser("identify")
         parser_identify.set_defaults(subcommand = self.identify)
         parser_identify.add_argument("snippet", type=str, 
-            help="location for a snippet to be identified"
+            help="location of the snippet to be identified"
         )
         parser_identify.add_argument("--slow", action="store_true", default=False,
             help="performs a slow linear search, for testing purposes"
@@ -76,6 +76,16 @@ class Freezam(object):
         # parser for clear subcommand
         parser_clear = subparsers.add_parser("clear")
         parser_clear.set_defaults(subcommand = self.clear)
+
+        # parser for plot subcommand
+        parser_plot = subparsers.add_parser("plot")
+        parser_plot.set_defaults(subcommand = self.plot)
+        parser_plot.add_argument("song_id", type=str, 
+            help="songid of the song to be plotted"
+        )
+        parser_plot.add_argument("--f", default=None, 
+            help="specifies a file for the plot to be written to"
+        )
 
         # parse arguments
         args = parser.parse_args(sys.argv[1:])
@@ -189,8 +199,7 @@ class Freezam(object):
         """
         top-level handler for plotting a song currently in the library
         """
-        self.logger.info("plotting song " + args.song_id)
-        self.databaser.plot(args.song_id, args.location)
+        self.databaser.plot(args.song_id, args.f)
 
 if __name__ == "__main__":
     Freezam()

@@ -60,18 +60,23 @@ def plot_periodogram(freq, pdgram):
     plt.ylabel('PSD [V**2/Hz]')
     plt.show()
 
-def plot_spectrogram(l_pdgrams, save_location=None):
+def plot_spectrogram(series, samp_rate, window_fn="hamming", 
+                     h=10, title="", save_location=None):
     # TODO: TEST this from an entry_point
     """
     takes a set of local periodograms (l_pdgrams), constructs 
     a spectrogram, and then plots it
     """
     plt.figure()
-    plt.pcolormesh(l_pdgrams.T)
-    plt.xlabel("Window Center")
+    # compute the spectrogram
+    f, t, Sxx = signal.spectrogram(series, samp_rate, 
+                                   window=window_fn, 
+                                   nperseg=h)
+    # create a mesh color plot of the spectrogram
+    plt.pcolormesh(t, f, Sxx)
+    plt.title(title)
+    plt.xlabel("Time [s]")
     plt.ylabel("Frequency [Hz]")
-    cbar = plt.colorbar()
-    cbar.ax.set_ylabel("PSD [V**2/Hz]", rotation=270)
     if save_location is None:
         plt.show()
     else:

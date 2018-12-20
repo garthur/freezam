@@ -10,7 +10,13 @@ import tabulate
 import psycopg2
 import numpy as np
 
+import fzcomp
+
 logger = logging.getLogger('fz.db')
+
+# directory constants
+ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+TEMP_DIR = os.path.join(ROOT_DIR, "temp")
 
 # TODO: test this
 class FileSystemDB(object):
@@ -176,10 +182,6 @@ class FileSystemDB(object):
             logger.error("clearing the library failed", exc_info=True)
         logger.info("library empty!")
 
-    def plot(self, song_id, save_location=None):
-        logger.info("plotting song " + song_id)
-        song_file = os.path.join(self.fz_song_data, song_id + ".wav")
-
 class PostgreSQLDB:
     """
     provides functions for reading and writing to a database
@@ -238,7 +240,7 @@ class PostgreSQLDB:
         insert_lib = """
                      INSERT INTO fz_song_library (
                         song_id, title, artist, album, 
-                        release_date, samp_rate, length
+                        release_date, length
                      ) VALUES (%s, %s, %s, %s, %s, %s);
                      """
         insert_sig = """
@@ -247,7 +249,7 @@ class PostgreSQLDB:
                      """
         insert_dat = """
                      INSERT INTO fz_song_data (song_id, samp_rate, data)
-                     VALUES (%s, %s);
+                     VALUES (%s, %s, %s);
                      """
         try:
             # connect to db
@@ -434,5 +436,45 @@ class PostgreSQLDB:
         finally:
             if conn is not None:
                 conn.close()
+
+    def plot(self, song_id, save_location=None):
+        """
+        plots the spectrogram of a song in the library
+        """
+        conn = None
+        # sql commands
+        data_sql = """
+                   SELECT samp_rate, data FROM fz_song_data
+                   WHERE song_id = %s;
+                   """
+        name_sql = """
+                   SELECT title FROM fz_song_library
+                   WHERE song_id = %s;
+                   """
+        try:
+            logger.info("plotting song " + song_id + "...")
+            conn = psycopg2.connect(host=self.host, database=self.db, 
+                                    user=self.user, password=self.pw)
+            cur = conn.cursor()
+            # get the data
+            cur.execute(data_sql, (song_id,))
+            samp_rate, data = cur.fetchone()
+            data = pickle.loads(data)
+            # get the title
+            cur.execute(name_sql, (song_id,))
+            title = cur.fetchone()[0]
+            fzcomp.plot_spectrogram(
+                data, samp_rate,
+                window_fn=self.params["periodograms"]["window_fn"],
+                h=self.params["periodograms"]["window_size"],
+                title=title,
+                save_location=save_location
+            )
+        except:
+            logger.error("there was an error trying to plot song " + song_id, exc_info=True)
+        finally:
+            if conn is not None:
+                conn.close()
+        
 
 
