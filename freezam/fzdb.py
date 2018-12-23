@@ -72,7 +72,7 @@ class FileSystemDB(object):
             # write in the signatures
             with open(sig_file, "wb") as output:
                 sigs = {"maxpow":fzcomp.compute_sig_maxpow(s.l_pdgrams, s.samp_rate), 
-                        "posfreq":fzcomp.compute_sig_posfreq(s.l_pdgrams, s.samp_rate)}
+                        "posfreq":fzcomp.compute_sig_posfreq(s.freq, s.l_pdgrams)}
                 pickle.dump(sigs, output, pickle.HIGHEST_PROTOCOL)
             # write in the files
             # if the file is in temp, we move it to the db
@@ -152,13 +152,12 @@ class FileSystemDB(object):
         """
         matches = []
         
-        sig_snippet = fzcomp.compute_sig(snippet.l_pdgrams, snippet.samp_rate,
-                                         self.params["search"]["sig_type"])
+        sig_snippet = fzcomp.compute_sig_maxpow(snippet.l_pdgrams, snippet.samp_rate)
 
         logger.info("slow searching through the database...")
         for song in os.listdir(self.fz_song_sigs):
             # get the appropriate signature from the file
-            sig_full = pickle.load(os.path.join(self.fz_song_sigs, song + ".pkl"))[self.params["search"]["sig_type"]]
+            sig_full = pickle.load(os.path.join(self.fz_song_sigs, song + ".pkl"))["maxpow"]
             # if a song matches, then add it's info to our list of matches
             if (fzcomp.match_signature(sig_snippet, sig_full,
                                        epsilon=self.params["search"]["threshold_epsilon"])):
@@ -269,7 +268,7 @@ class PostgreSQLDB:
                          PostgreSQLDB.__list_to_arr(fzcomp.compute_sig_maxpow(s.l_pdgrams, s.samp_rate))))
             cur.execute(insert_sig,
                         (s.song_id, "posfreq",
-                        PostgreSQLDB.__list_to_arr(fzcomp.compute_sig_posfreq(s.l_pdgrams, s.samp_rate))))
+                        PostgreSQLDB.__list_to_arr(fzcomp.compute_sig_posfreq(s.freq, s.l_pdgrams))))
             # insert song data
             logger.info("inserting song file...")
             cur.execute(insert_dat, (s.song_id, s.samp_rate, psycopg2.Binary(pickle.dumps(s.data))))
@@ -362,20 +361,19 @@ class PostgreSQLDB:
         results = []
         sig_sql = """
                   SELECT song_id, sig_ 
-                  FROM fz_song_signatures WHERE sig_type = %s;
+                  FROM fz_song_signatures WHERE sig_type = maxpow;
                   """
         inf_sql = """
                   SELECT song_id, title, artist, album, release_date, length
                   FROM fz_song_library WHERE song_id = %s;
                   """
-        sig_snippet = fzcomp.compute_sig(snippet.l_pdgrams, snippet.samp_rate,
-                                         self.params["search"]["sig_type"])
+        sig_snippet = fzcomp.compute_sig_maxpow(snippet.l_pdgrams, snippet.samp_rate)
         try:
             logger.info("slow searching through the database...")
             conn = psycopg2.connect(host=self.host, database=self.db, 
                                     user=self.user, password=self.pw)
             cur = conn.cursor()
-            cur.execute(sig_sql, (self.params["search"]["sig_type"],))
+            cur.execute(sig_sql)
             song = cur.fetchone()
 
             while song is not None:

@@ -119,13 +119,6 @@ def compute_sig_maxpow(l_pdgrams, samp_rate, m=8):
     logger.info("max power signature computed!")
     return np.array(signatures)
 
-def compute_sig(l_pdgrams, samp_rate, sig_type="maxpow"):
-    """
-    computes the appropriate signature from the local periodograms
-    """
-    sig_dict = {"maxpow":compute_sig_maxpow, "posfreq":compute_sig_posfreq}
-    return sig_dict[sig_type](l_pdgrams, samp_rate)
-
 # HASHES
 def compute_hash_wang(sig, h_table):
     """
