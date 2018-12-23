@@ -39,7 +39,7 @@ class SongEntry(object):
         self.length = round(len(self.data) / self.samp_rate, 2)
         
         # perform spectral analysis
-        self.l_pdgrams = fzcomp.compute_periodogram(
+        self.freq, self.l_pdgrams = fzcomp.compute_periodogram(
             self.data,
             self.samp_rate,
             window_fn = window_fn
