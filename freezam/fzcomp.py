@@ -24,7 +24,6 @@ def compute_periodogram(series, samp_rate, h=10, delta=1, window_fn="hamming"):
     """
     H = h * samp_rate
     SHIFT = delta * samp_rate
-    
     # slice time series into windows of length (h*samp_rate), stepping by
     # delta*samp_rate
     slices = util.view_as_windows(series, window_shape=(H,), step=SHIFT)
@@ -39,7 +38,7 @@ def compute_periodogram(series, samp_rate, h=10, delta=1, window_fn="hamming"):
                     for win_slice in slices]
     
     logger.info("local periodograms computed!")
-    return np.array(pdgrams)
+    return np.array(freq), np.array(pdgrams)
 
 def smooth_periodogram(l_pdgram, kernel):
     # TODO implement this
@@ -60,8 +59,8 @@ def plot_periodogram(freq, pdgram):
     plt.ylabel('PSD [V**2/Hz]')
     plt.show()
 
-def plot_spectrogram(series, samp_rate, window_fn="hamming", 
-                     h=10, title="", save_location=None):
+def plot_spectrogram(series, samp_rate, title="", 
+                     save_location=None):
     # TODO: TEST this from an entry_point
     """
     takes a set of local periodograms (l_pdgrams), constructs 
@@ -69,11 +68,7 @@ def plot_spectrogram(series, samp_rate, window_fn="hamming",
     """
     plt.figure()
     # compute the spectrogram
-    f, t, Sxx = signal.spectrogram(series, samp_rate, 
-                                   window=window_fn, 
-                                   nperseg=h)
-    # create a mesh color plot of the spectrogram
-    plt.pcolormesh(t, f, Sxx)
+    plt.specgram(series, Fs=samp_rate)
     plt.title(title)
     plt.xlabel("Time [s]")
     plt.ylabel("Frequency [Hz]")
@@ -84,20 +79,20 @@ def plot_spectrogram(series, samp_rate, window_fn="hamming",
         
 
 # SIGNATURES
-def compute_sig_posfreq(l_pdgrams, samp_rate):
+def compute_sig_posfreq(freq, l_pdgrams):
     """
     computes a signature from local periodograms (l_pdgram) using
     the peak positive frequency method
     """
     logger.info("computing the positive frequency signature...")
+    max_freq = max(freq)
     signatures = []
-    # loop through the periodograms
+    # loop through periodograms
     for pdgram in l_pdgrams:
-        # find the index where the maximum power occurs
-        f = np.argmax(pdgram)/(samp_rate/2)
-        # record that frequency normalized to [0, 1]
-        signatures.append([f])
-    
+        # find the peaks in each periodogram
+        peaks, _ = signal.find_peaks(pdgram)
+        # append the frequencies associated with 
+        signatures.append(freq[peaks] / max_freq)
     return np.array(signatures)
 
 def compute_sig_maxpow(l_pdgrams, samp_rate, m=8):
